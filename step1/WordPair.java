@@ -75,7 +75,7 @@ class WordPair implements WritableComparable<WordPair> {
 
     @Override
     public String toString(){
-        return decade + ": (" + word1 + ", " + word2 + ")";
+        return decade + " " + word1 + " " + word2;
     }
 
 }

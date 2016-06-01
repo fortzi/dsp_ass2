@@ -1,8 +1,6 @@
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.StringTokenizer;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
@@ -15,9 +13,7 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.SequenceFileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
-public class WordCount {
-
-
+public class PairCount {
 
     public static class NgramMapper extends Mapper<Object, Text, WordPair, IntWritable>{
 
@@ -88,7 +84,7 @@ public class WordCount {
         }
     }
 
-    public static class IntSumReducer extends Reducer<WordPair,IntWritable,WordPair,IntWritable> {
+    public static class IntSumReducer extends Reducer<WordPair,IntWritable, WordPair,IntWritable> {
         private IntWritable result = new IntWritable();
 
         public void reduce(WordPair key, Iterable<IntWritable> values, Context context) throws IOException, InterruptedException {
@@ -103,8 +99,8 @@ public class WordCount {
 
     public static void main(String[] args) throws Exception {
         Configuration conf = new Configuration();
-        Job job = Job.getInstance(conf, "word count");
-        job.setJarByClass(WordCount.class);
+        Job job = Job.getInstance(conf, "pair count");
+        job.setJarByClass(PairCount.class);
         job.setMapperClass(NgramMapper.class);
         job.setCombinerClass(IntSumReducer.class);
         job.setReducerClass(IntSumReducer.class);
