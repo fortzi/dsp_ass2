@@ -1,5 +1,6 @@
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.DoubleWritable;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapreduce.Counter;
 import org.apache.hadoop.mapreduce.Job;
@@ -50,19 +51,29 @@ public class Stepper {
         FileInputFormat.addInputPath(stepOneJob.getJob(), new Path(args[0]));
         FileOutputFormat.setOutputPath(stepOneJob.getJob(), new Path(args[1]));
 
+        stepOneJob.getJob().waitForCompletion(true);
         /**********************************************************************************/
-        /* step one configuration and job setup */
+        /* step two configuration and job setup */
         /**********************************************************************************/
 
         Configuration stepTwoConf = new Configuration();
+
+        stepTwoConf.setLong(COUNTERS.TOTAL_WORDS.name(), stepOneJob.getJob().getCounters().findCounter(COUNTERS.TOTAL_WORDS).getValue());
+        stepTwoConf.setLong(COUNTERS.KEY_VALUE.name(), stepOneJob.getJob().getCounters().findCounter(COUNTERS.KEY_VALUE).getValue());
+        for (int i = 1900; i <= 2000; i += 10)
+            stepTwoConf.setLong(Stepper.WORDS_COUNTERS + StepOne.StepOneMapper.getDecade(i).toString(), stepOneJob.getJob().getCounters().findCounter(Stepper.WORDS_COUNTERS, StepOne.StepOneMapper.getDecade(i).toString()).getValue());
+
+
         ControlledJob stepTwoJob = new ControlledJob(stepTwoConf);
         stepTwoJob.setJob(Job.getInstance(stepTwoConf,"Step Two"));
 
         stepTwoJob.getJob().setJarByClass(StepTwo.class);
         stepTwoJob.getJob().setMapperClass(StepTwo.StepTwoMapper.class);
         stepTwoJob.getJob().setReducerClass(StepTwo.StepTwoReducer.class);
+        stepTwoJob.getJob().setMapOutputKeyClass(WordPair.class);
+        stepTwoJob.getJob().setMapOutputValueClass(ThreeSums.class);
         stepTwoJob.getJob().setOutputKeyClass(WordPair.class);
-        stepTwoJob.getJob().setOutputValueClass(ThreeSums.class);
+        stepTwoJob.getJob().setOutputKeyClass(DoubleWritable.class);
 
         FileInputFormat.addInputPath(stepTwoJob.getJob(), new Path(args[1]));
         FileOutputFormat.setOutputPath(stepTwoJob.getJob(), new Path(args[2]));
@@ -71,7 +82,10 @@ public class Stepper {
         /* RUNNING ! */
         /**********************************************************************************/
 
-        stepTwoJob.addDependingJob(stepOneJob);
+
+        stepTwoJob.getJob().waitForCompletion(true);
+
+        /*stepTwoJob.addDependingJob(stepOneJob);
         JobControl jc = new JobControl("JC");
         jc.addJob(stepOneJob);
         jc.addJob(stepTwoJob);
@@ -81,7 +95,8 @@ public class Stepper {
         while (!jc.allFinished()) {
             System.out.println("Still running...");
             Thread.sleep(5000);
-        }
+        }*/
 
+        System.exit(0);
     }
 }

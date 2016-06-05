@@ -32,7 +32,7 @@ public class StepOne {
             return (str.length() > 1);
         }
 
-        private static Integer getDecade(int year) {
+        public static Integer getDecade(int year) {
             return (year - (year % 10));
         }
 
@@ -186,7 +186,7 @@ public class StepOne {
 
     }
 
-    public static void main(String[] args) throws Exception {
+    /*public static void main(String[] args) throws Exception {
 
         System.out.println("########################### start ###############################");
         System.out.println("########################### start ###############################");
@@ -223,5 +223,5 @@ public class StepOne {
         }
 
         System.exit(result);
-    }
+    }*/
 }

@@ -1,5 +1,7 @@
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hdfs.server.namenode.startupprogress.Step;
+import org.apache.hadoop.io.DoubleWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
@@ -30,9 +32,9 @@ public class StepTwo {
         }
     }
 
-    public static class StepTwoReducer extends Reducer<WordPair, ThreeSums, WordPair, ThreeSums> {
+    public static class StepTwoReducer extends Reducer<WordPair, ThreeSums, WordPair, DoubleWritable> {
 
-            public void reduce(WordPair key, Iterable<ThreeSums> values, Context context) throws IOException, InterruptedException {
+        public void reduce(WordPair key, Iterable<ThreeSums> values, Context context) throws IOException, InterruptedException {
 
             long carSum=0;
             long cdrSum=0;
@@ -47,11 +49,23 @@ public class StepTwo {
                 pairSum += val.getPairSum();
             }
 
-            context.write(key, new ThreeSums(carSum, cdrSum, pairSum));
+//            System.out.println("8===============================================D");
+//            System.out.println("Total words: " + context.getConfiguration().get("TOTAL_WORDS"));
+//            System.out.println("Key value: " + context.getConfiguration().get("KEY_VALUE"));
+//            for (int i = 1900; i <= 2000; i += 10)
+//                System.out.println("Decade " + i + " " + context.getConfiguration().get(Stepper.WORDS_COUNTERS + StepOne.StepOneMapper.getDecade(i).toString()));
+
+            long N = Long.parseLong(context.getConfiguration().get("TOTAL_WORDS"));
+            double pmi = Math.log(N * pairSum / (carSum * cdrSum));
+
+//            System.out.println(key.getDecade() + ": " + key.getWord1() + " " + key.getWord2() + " " + pmi);
+//            System.out.println("8===============================================D");
+//            context.write(key, new ThreeSums(carSum, cdrSum, pairSum));
+            context.write(key, new DoubleWritable(pmi));
         }
     }
 
-    public static void main(String[] args) throws Exception {
+    /*public static void main(String[] args) throws Exception {
         Configuration conf = new Configuration();
         Job job = Job.getInstance(conf, "word count");
 
@@ -73,6 +87,5 @@ public class StepTwo {
         FileOutputFormat.setOutputPath(job, new Path(args[1]));
 
         System.exit(job.waitForCompletion(true) ? 0 : 1);
-    }
-
+    }*/
 }
