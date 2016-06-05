@@ -1,5 +1,8 @@
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.mapred.JobConf;
+import org.apache.hadoop.mapred.Mapper;
+import org.apache.hadoop.mapred.Reducer;
 import org.apache.hadoop.mapreduce.Counter;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
@@ -20,24 +23,32 @@ public class Stepper {
     public static final String WORDS_COUNTERS = "WORDS_COUNTERS";
 
     public static void main(String[] args) throws IOException, ClassNotFoundException, InterruptedException {
-        Configuration conf = new Configuration();
-        Job job = Job.getInstance(conf, "new method - step one");
-        job.setJarByClass(StepOne.class);
-        job.setMapperClass(StepOne.StepOneMapper.class);
-        //job.setCombinerClass(IntSumReducer.class); //needed to be removed to have diffrente classe in map and reduce.
-        job.setReducerClass(StepOne.StepOneReducer.class);
-        job.setPartitionerClass(StepOne.StepOnePartitioner.class);
+        JobConf step1_conf = new JobConf(new Configuration());
+        JobConf step2_conf = new JobConf(new Configuration());
+        Job step1 = Job.getInstance(step1_conf, "step1");
+        Job step2 = Job.getInstance(step2_conf, "step2");
 
-        job.setMapOutputKeyClass(CarAndDecadeAndOrder.class);
-        job.setMapOutputValueClass(CountAndCdrAndPairCount.class);
+        step1_conf.setJarByClass(StepOne.class);
+        step1_conf.setMapperClass((Class<? extends Mapper>) StepOne.StepOneMapper.class);
+        step1_conf.setReducerClass((Class<? extends Reducer>) StepOne.StepOneReducer.class);
+        step1_conf.setMapOutputKeyClass(CarAndDecadeAndOrder.class);
+        step1_conf.setMapOutputValueClass(CountAndCdrAndPairCount.class);
+        step1_conf.setOutputKeyClass(WordPair.class);
+        step1_conf.setOutputValueClass(ThreeSums.class);
 
-        job.setOutputKeyClass(WordPair.class);
-        job.setOutputValueClass(ThreeSums.class);
+        FileInputFormat.addInputPath(step1, new Path("/input"));
+        FileOutputFormat.setOutputPath(step1, new Path("/output_1"));
 
-        job.setInputFormatClass(SequenceFileInputFormat.class);
+        step2_conf.setJarByClass(StepTwo.class);
+        step2_conf.setMapperClass((Class<? extends Mapper>) StepTwo.StepTwoMapper.class);
+        step2_conf.setReducerClass((Class<? extends Reducer>) StepTwo.StepTwoReducer.class);
+        step2_conf.setOutputKeyClass(WordPair.class);
+        step2_conf.setOutputValueClass(ThreeSums.class);
 
-        FileInputFormat.addInputPath(job, new Path(args[0]));
-        FileOutputFormat.setOutputPath(job, new Path(args[1]));
+        FileInputFormat.addInputPath(step2, new Path("/output_1"));
+        FileOutputFormat.setOutputPath(step2, new Path("/output_2"));
+
+        // STOPPED HERE
 
         int result = job.waitForCompletion(true) ? 0 : 1;
 
