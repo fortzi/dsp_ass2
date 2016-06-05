@@ -33,7 +33,7 @@ public class PairCount {
         }
 
         private static boolean isLegal(String str) {
-            return !str.replaceAll("[^a-zA-Z]","").equals("");
+            return (str.length() > 1);
         }
 
         public void map(Object key, Text value, Context context) throws IOException, InterruptedException {
@@ -41,6 +41,14 @@ public class PairCount {
             String[] ngram = dbrow[0].split("\\s+");
 
             int year = Integer.parseInt(dbrow[1]);
+
+            for(String str : ngram)
+                    str = str.replaceAll("[^a-zA-Z]","");
+
+            //according to assignment instructions:
+            if(year < 1900)
+                return;
+
             IntWritable occurrences = new IntWritable(Integer.parseInt(dbrow[2]));
 
             switch(ngram.length) {
@@ -98,6 +106,7 @@ public class PairCount {
     }
 
     public static void main(String[] args) throws Exception {
+
         Configuration conf = new Configuration();
         Job job = Job.getInstance(conf, "pair count");
         job.setJarByClass(PairCount.class);

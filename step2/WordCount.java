@@ -33,7 +33,6 @@ public class WordCount {
     }
 
     public static class Step2Reducer extends Reducer<CarAndOrder, CdrAndPairCount, WordPair, ThreeSums> {
-        private IntWritable result = new IntWritable();
         private String lastCar = "";
         private int lastCarSum = 0;
 
@@ -68,14 +67,20 @@ public class WordCount {
     public static void main(String[] args) throws Exception {
         Configuration conf = new Configuration();
         Job job = Job.getInstance(conf, "word count");
-        job.setJarByClass(PairCount.class);
-        job.setMapperClass(Step2Mapper.class);
-        job.setCombinerClass(Step2Reducer.class);
-        job.setReducerClass(Step2Reducer.class);
-        job.setOutputKeyClass(CarAndOrder.class);
-        job.setOutputValueClass(IntWritable.class);
 
-        job.setInputFormatClass(SequenceFileInputFormat.class);
+        job.setJarByClass(WordCount.class);
+
+        job.setMapperClass(Step2Mapper.class);
+        //job.setCombinerClass(Step2Reducer.class);
+        job.setReducerClass(Step2Reducer.class);
+
+        job.setMapOutputKeyClass(CarAndOrder.class);
+        job.setMapOutputValueClass(CdrAndPairCount.class);
+
+        job.setOutputKeyClass(WordPair.class);
+        job.setOutputValueClass(ThreeSums.class);
+
+        //job.setInputFormatClass(SequenceFileInputFormat.class);
 
         FileInputFormat.addInputPath(job, new Path(args[0]));
         FileOutputFormat.setOutputPath(job, new Path(args[1]));

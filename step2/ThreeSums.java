@@ -10,9 +10,9 @@ import java.io.IOException;
 
 class ThreeSums implements Writable {
 
-    private int carSum;
-    private int cdrSum;
-    private int pairSum;
+    private long carSum;
+    private long cdrSum;
+    private long pairSum;
 
     public ThreeSums() {
         carSum = 0;
@@ -20,7 +20,7 @@ class ThreeSums implements Writable {
         pairSum = 0;
     }
 
-    public ThreeSums(int car, int cdr, int pair) {
+    public ThreeSums(long car, long cdr, long pair) {
         this.carSum = car;
         this.cdrSum = cdr;
         this.pairSum = pair;
@@ -33,29 +33,29 @@ class ThreeSums implements Writable {
         this.pairSum = Integer.parseInt(toks[startIndex+2]);
     }
 
-    public int getCarSum() { return carSum; }
+    public long getCarSum() { return carSum; }
 
-    public int getCdrSum() { return cdrSum; }
+    public long getCdrSum() { return cdrSum; }
 
-    public int getPairSum() { return pairSum; }
+    public long getPairSum() { return pairSum; }
 
     @Override
     public void readFields(DataInput in) throws IOException {
-        carSum = in.readInt();
-        cdrSum = in.readInt();
-        pairSum = in.readInt();
+        carSum = in.readLong();
+        cdrSum = in.readLong();
+        pairSum = in.readLong();
     }
 
     @Override
     public void write(DataOutput out) throws IOException {
-        out.writeInt(carSum);
-        out.writeInt(cdrSum);
-        out.writeInt(pairSum);
+        out.writeLong(carSum);
+        out.writeLong(cdrSum);
+        out.writeLong(pairSum);
     }
 
     @Override
     public String toString(){
-        return carSum + "," + cdrSum + "," + pairSum;
+        return carSum + " " + cdrSum + " " + pairSum;
     }
 
 }
