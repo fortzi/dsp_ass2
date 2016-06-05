@@ -20,14 +20,8 @@ class WordPair implements WritableComparable<WordPair> {
     }
 
     public WordPair(String word1, String word2, int year) {
-        if(word1.compareTo(word2) < 0) {
-            this.word1 = word1;
-            this.word2 = word2;
-        }
-        else {
-            this.word2 = word1;
-            this.word1 = word2;
-        }
+        this.word1 = word1;
+        this.word2 = word2;
         this.decade = year - (year % 10);
     }
 
