@@ -1,12 +1,12 @@
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapred.JobConf;
-import org.apache.hadoop.mapred.Mapper;
-import org.apache.hadoop.mapred.Reducer;
 import org.apache.hadoop.mapreduce.Counter;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.SequenceFileInputFormat;
+import org.apache.hadoop.mapreduce.lib.jobcontrol.ControlledJob;
+import org.apache.hadoop.mapreduce.lib.jobcontrol.JobControl;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
 import java.io.IOException;
@@ -23,45 +23,65 @@ public class Stepper {
     public static final String WORDS_COUNTERS = "WORDS_COUNTERS";
 
     public static void main(String[] args) throws IOException, ClassNotFoundException, InterruptedException {
-        JobConf step1_conf = new JobConf(new Configuration());
-        JobConf step2_conf = new JobConf(new Configuration());
-        Job step1 = Job.getInstance(step1_conf, "step1");
-        Job step2 = Job.getInstance(step2_conf, "step2");
 
-        step1_conf.setJarByClass(StepOne.class);
-        step1_conf.setMapperClass((Class<? extends Mapper>) StepOne.StepOneMapper.class);
-        step1_conf.setReducerClass((Class<? extends Reducer>) StepOne.StepOneReducer.class);
-        step1_conf.setMapOutputKeyClass(CarAndDecadeAndOrder.class);
-        step1_conf.setMapOutputValueClass(CountAndCdrAndPairCount.class);
-        step1_conf.setOutputKeyClass(WordPair.class);
-        step1_conf.setOutputValueClass(ThreeSums.class);
+        if(args.length < 3) {
+            System.out.println("please enter input output1 output 2");
+            return;
+        }
 
-        FileInputFormat.addInputPath(step1, new Path("/input"));
-        FileOutputFormat.setOutputPath(step1, new Path("/output_1"));
+        /**********************************************************************************/
+        /* step one configuration and job setup */
+        /**********************************************************************************/
 
-        step2_conf.setJarByClass(StepTwo.class);
-        step2_conf.setMapperClass((Class<? extends Mapper>) StepTwo.StepTwoMapper.class);
-        step2_conf.setReducerClass((Class<? extends Reducer>) StepTwo.StepTwoReducer.class);
-        step2_conf.setOutputKeyClass(WordPair.class);
-        step2_conf.setOutputValueClass(ThreeSums.class);
+        Configuration stepOneConf = new Configuration();
+        ControlledJob stepOneJob = new ControlledJob(stepOneConf);
+        stepOneJob.setJob(Job.getInstance(stepOneConf,"Step one"));
 
-        FileInputFormat.addInputPath(step2, new Path("/output_1"));
-        FileOutputFormat.setOutputPath(step2, new Path("/output_2"));
+        stepOneJob.getJob().setJarByClass(StepOne.class);
+        stepOneJob.getJob().setMapperClass(StepOne.StepOneMapper.class);
+        stepOneJob.getJob().setReducerClass(StepOne.StepOneReducer.class);
+        stepOneJob.getJob().setPartitionerClass(StepOne.StepOnePartitioner.class);
+        stepOneJob.getJob().setMapOutputKeyClass(CarAndDecadeAndOrder.class);
+        stepOneJob.getJob().setMapOutputValueClass(CountAndCdrAndPairCount.class);
+        stepOneJob.getJob().setOutputKeyClass(WordPair.class);
+        stepOneJob.getJob().setOutputValueClass(ThreeSums.class);
+        stepOneJob.getJob().setInputFormatClass(SequenceFileInputFormat.class);
 
-        // STOPPED HERE
+        FileInputFormat.addInputPath(stepOneJob.getJob(), new Path(args[0]));
+        FileOutputFormat.setOutputPath(stepOneJob.getJob(), new Path(args[1]));
 
-        int result = job.waitForCompletion(true) ? 0 : 1;
+        /**********************************************************************************/
+        /* step one configuration and job setup */
+        /**********************************************************************************/
 
-        System.out.println("########################### finish ###############################");
-        System.out.println("########################### finish ###############################");
+        Configuration stepTwoConf = new Configuration();
+        ControlledJob stepTwoJob = new ControlledJob(stepTwoConf);
+        stepTwoJob.setJob(Job.getInstance(stepTwoConf,"Step Two"));
 
-        System.out.println("Total Words in Corpus: " + job.getCounters().findCounter(COUNTERS.TOTAL_WORDS).getValue());
-        System.out.println("Total KeyValues sent: " + job.getCounters().findCounter(COUNTERS.KEY_VALUE).getValue());
+        stepTwoJob.getJob().setJarByClass(StepTwo.class);
+        stepTwoJob.getJob().setMapperClass(StepTwo.StepTwoMapper.class);
+        stepTwoJob.getJob().setReducerClass(StepTwo.StepTwoReducer.class);
+        stepTwoJob.getJob().setOutputKeyClass(WordPair.class);
+        stepTwoJob.getJob().setOutputValueClass(ThreeSums.class);
 
-        for (Counter counter : job.getCounters().getGroup(WORDS_COUNTERS)) {
-            System.out.println("  - " + counter.getName() + ": "+counter.getValue());
+        FileInputFormat.addInputPath(stepTwoJob.getJob(), new Path(args[1]));
+        FileOutputFormat.setOutputPath(stepTwoJob.getJob(), new Path(args[2]));
+
+        /**********************************************************************************/
+        /* RUNNING ! */
+        /**********************************************************************************/
+
+        stepTwoJob.addDependingJob(stepOneJob);
+        JobControl jc = new JobControl("JC");
+        jc.addJob(stepOneJob);
+        jc.addJob(stepTwoJob);
+
+        new Thread(jc).run();
+
+        while (!jc.allFinished()) {
+            System.out.println("Still running...");
+            Thread.sleep(5000);
         }
 
     }
-
 }
