@@ -1,6 +1,5 @@
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.*;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
@@ -12,12 +11,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 public class StepOne {
-
-    public static enum COUNTERS {
-        TOTAL_WORDS,
-        KEY_VALUE
-    }
-    public static final String WORDS_COUNTERS = "WORDS_COUNTERS";
 
     public static class StepOneMapper extends Mapper<Object, Text, CarAndDecadeAndOrder, CountAndCdrAndPairCount>{
 
@@ -62,9 +55,9 @@ public class StepOne {
             for(String word : ngram)
                 if(isOK(word)) {
                     context.write(new CarAndDecadeAndOrder(year, word, 0), new CountAndCdrAndPairCount(occurrences, "", 0));
-                    context.getCounter(COUNTERS.TOTAL_WORDS).increment(occurrences);
-                    context.getCounter(COUNTERS.KEY_VALUE).increment(1);
-                    context.getCounter(WORDS_COUNTERS,getDecade(year).toString()).increment(occurrences);
+                    context.getCounter(Stepper.COUNTERS.TOTAL_WORDS).increment(occurrences);
+                    context.getCounter(Stepper.COUNTERS.KEY_VALUE).increment(1);
+                    context.getCounter(Stepper.WORDS_COUNTERS,getDecade(year).toString()).increment(occurrences);
                 }
 
             switch(ngram.length) {
@@ -75,7 +68,7 @@ public class StepOne {
                     if(isOK(ngram[0])) {
                         context.write(new CarAndDecadeAndOrder(year, ngram[0], 1), new CountAndCdrAndPairCount(0, ngram[1], occurrences));
                         context.write(new CarAndDecadeAndOrder(year, ngram[1], 1), new CountAndCdrAndPairCount(0, ngram[0], 0));
-                        context.getCounter(COUNTERS.KEY_VALUE).increment(2);
+                        context.getCounter(Stepper.COUNTERS.KEY_VALUE).increment(2);
                     }
                     break;
 
@@ -85,12 +78,12 @@ public class StepOne {
                     if(isOK(ngram[0])) {
                         context.write(new CarAndDecadeAndOrder(year, ngram[0], 1), new CountAndCdrAndPairCount(0, ngram[1], occurrences));
                         context.write(new CarAndDecadeAndOrder(year, ngram[1], 1), new CountAndCdrAndPairCount(0, ngram[0], 0));
-                        context.getCounter(COUNTERS.KEY_VALUE).increment(2);
+                        context.getCounter(Stepper.COUNTERS.KEY_VALUE).increment(2);
                     }
                     if(isOK(ngram[2])) {
                         context.write(new CarAndDecadeAndOrder(year, ngram[2], 1), new CountAndCdrAndPairCount(0,ngram[1],occurrences));
                         context.write(new CarAndDecadeAndOrder(year, ngram[1], 1), new CountAndCdrAndPairCount(0, ngram[2], 0));
-                        context.getCounter(COUNTERS.KEY_VALUE).increment(2);
+                        context.getCounter(Stepper.COUNTERS.KEY_VALUE).increment(2);
                     }
                     break;
 
@@ -100,17 +93,17 @@ public class StepOne {
                     if(isOK(ngram[0])) {
                         context.write(new CarAndDecadeAndOrder(year, ngram[0], 1), new CountAndCdrAndPairCount(0, ngram[1], occurrences));
                         context.write(new CarAndDecadeAndOrder(year, ngram[1], 1), new CountAndCdrAndPairCount(0, ngram[0], 0));
-                        context.getCounter(COUNTERS.KEY_VALUE).increment(2);
+                        context.getCounter(Stepper.COUNTERS.KEY_VALUE).increment(2);
                     }
                     if(isOK(ngram[2])) {
                         context.write(new CarAndDecadeAndOrder(year, ngram[2], 1), new CountAndCdrAndPairCount(0,ngram[1],occurrences));
                         context.write(new CarAndDecadeAndOrder(year, ngram[1], 1), new CountAndCdrAndPairCount(0, ngram[2], 0));
-                        context.getCounter(COUNTERS.KEY_VALUE).increment(2);
+                        context.getCounter(Stepper.COUNTERS.KEY_VALUE).increment(2);
                     }
                     if(isOK(ngram[3])) {
                         context.write(new CarAndDecadeAndOrder(year, ngram[3], 1), new CountAndCdrAndPairCount(0,ngram[1],occurrences));
                         context.write(new CarAndDecadeAndOrder(year, ngram[1], 1), new CountAndCdrAndPairCount(0, ngram[3], 0));
-                        context.getCounter(COUNTERS.KEY_VALUE).increment(2);
+                        context.getCounter(Stepper.COUNTERS.KEY_VALUE).increment(2);
                     }
                     break;
 
@@ -120,22 +113,22 @@ public class StepOne {
                     if(isOK(ngram[0])) {
                         context.write(new CarAndDecadeAndOrder(year, ngram[0], 1), new CountAndCdrAndPairCount(0,ngram[2],occurrences));
                         context.write(new CarAndDecadeAndOrder(year, ngram[2], 1), new CountAndCdrAndPairCount(0, ngram[0], 0));
-                        context.getCounter(COUNTERS.KEY_VALUE).increment(2);
+                        context.getCounter(Stepper.COUNTERS.KEY_VALUE).increment(2);
                     }
                     if(isOK(ngram[1])) {
                         context.write(new CarAndDecadeAndOrder(year, ngram[1], 1), new CountAndCdrAndPairCount(0,ngram[2],occurrences));
                         context.write(new CarAndDecadeAndOrder(year, ngram[2], 1), new CountAndCdrAndPairCount(0, ngram[1], 0));
-                        context.getCounter(COUNTERS.KEY_VALUE).increment(2);
+                        context.getCounter(Stepper.COUNTERS.KEY_VALUE).increment(2);
                     }
                     if(isOK(ngram[3])) {
                         context.write(new CarAndDecadeAndOrder(year, ngram[3], 1), new CountAndCdrAndPairCount(0,ngram[2],occurrences));
                         context.write(new CarAndDecadeAndOrder(year, ngram[2], 1), new CountAndCdrAndPairCount(0, ngram[3], 0));
-                        context.getCounter(COUNTERS.KEY_VALUE).increment(2);
+                        context.getCounter(Stepper.COUNTERS.KEY_VALUE).increment(2);
                     }
                     if(isOK(ngram[4])) {
                         context.write(new CarAndDecadeAndOrder(year, ngram[4], 1), new CountAndCdrAndPairCount(0,ngram[2],occurrences));
                         context.write(new CarAndDecadeAndOrder(year, ngram[2], 1), new CountAndCdrAndPairCount(0, ngram[4], 0));
-                        context.getCounter(COUNTERS.KEY_VALUE).increment(2);
+                        context.getCounter(Stepper.COUNTERS.KEY_VALUE).increment(2);
                     }
                     break;
 
@@ -145,7 +138,7 @@ public class StepOne {
         }
     }
 
-    private static class StepOnePartitioner extends Partitioner<CarAndDecadeAndOrder, CountAndCdrAndPairCount> {
+    public static class StepOnePartitioner extends Partitioner<CarAndDecadeAndOrder, CountAndCdrAndPairCount> {
         @Override
         public int getPartition(CarAndDecadeAndOrder car, CountAndCdrAndPairCount cdr, int numPartitions) {
             return car.getWord().charAt(0) % numPartitions;
@@ -222,10 +215,10 @@ public class StepOne {
         System.out.println("########################### finish ###############################");
         System.out.println("########################### finish ###############################");
 
-        System.out.println("Total Words in Corpus: " + job.getCounters().findCounter(COUNTERS.TOTAL_WORDS).getValue());
-        System.out.println("Total KeyValues sent: " + job.getCounters().findCounter(COUNTERS.KEY_VALUE).getValue());
+        System.out.println("Total Words in Corpus: " + job.getCounters().findCounter(Stepper.COUNTERS.TOTAL_WORDS).getValue());
+        System.out.println("Total KeyValues sent: " + job.getCounters().findCounter(Stepper.COUNTERS.KEY_VALUE).getValue());
 
-        for (Counter counter : job.getCounters().getGroup(WORDS_COUNTERS)) {
+        for (Counter counter : job.getCounters().getGroup(Stepper.WORDS_COUNTERS)) {
             System.out.println("  - " + counter.getName() + ": "+counter.getValue());
         }
 
