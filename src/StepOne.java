@@ -28,15 +28,15 @@ public class StepOne {
             int year = Integer.parseInt(dbrow[1]);
             int occurrences = Integer.parseInt(dbrow[2]);
 
-            //normalizing words.
+            // normalizing words.
             for(int i = 0; i < ngram.length; i++)
                 ngram[i] = ngram[i].replaceAll("[^a-zA-Z]", "").toLowerCase();
 
-            //according to assignment instructions:
+            // according to assignment instructions:
             if(year < 1900)
                 return;
 
-            //dispatching one for each legal word for the count process (order=0)
+            // dispatching one for each legal word for the count process (order = 0)
             for(String word : ngram) {
                 if (isOK(word)) {
                     context.write(new CarAndDecadeAndOrder(year, word, 0), new CountAndCdrAndPairCount(occurrences, "", 0));
@@ -72,81 +72,42 @@ public class StepOne {
 
     public static class StepOneReducer extends Reducer<CarAndDecadeAndOrder,CountAndCdrAndPairCount, WordPair, ThreeSums> {
         private String lastWord = "";
-        private long lastWordSum, carSum, cdrSum;
+        private long carSum, cdrSum, lastWordSum;
+        private String car, cdr;
 
         public void reduce(CarAndDecadeAndOrder key, Iterable<CountAndCdrAndPairCount> values, Context context)
                 throws IOException, InterruptedException {
 
-            System.out.print(key + " ### (last: " + lastWord + ") "); //todo remove
-
             if(key.getWord().equals(lastWord)) {
                 for (CountAndCdrAndPairCount val : values) {
-                    System.out.print("["+val.getWord()+"]"); //todo remove
                     //the middle word will sometimes add itself with null to be counted
                     if(val.getWord().equals("")) {
-                        System.out.print("!!!!!!!!!!!!!!!!!"); //todo remove
                         continue;
                     }
 
-                    //TODO make this more efficient (one comparison instead of 3)
-                    carSum = key.getWord().compareTo(val.getWord()) < 0 ? lastWordSum : 0;
-                    cdrSum = key.getWord().compareTo(val.getWord()) < 0 ? 0 : lastWordSum;
+                    if (key.getWord().compareTo(val.getWord()) < 0) {
+                        carSum = lastWordSum;
+                        cdrSum = 0;
+                        car = key.getWord();
+                        cdr = val.getWord();
+                    } else {
+                        carSum = 0;
+                        cdrSum = lastWordSum;
+                        car = val.getWord();
+                        cdr = key.getWord();
+                    }
 
-                    context.write(
-                                new WordPair(key.getWord(), val.getWord(), key.getDecade()),
-                                new ThreeSums(carSum, cdrSum, val.getPairCount()));
+                    context.write(new WordPair(car, cdr, key.getDecade()), new ThreeSums(carSum, cdrSum, val.getPairCount()));
                 }
             }
             else {
                 lastWordSum = 0;
                 lastWord = key.getWord();
+
                 for (CountAndCdrAndPairCount val : values) {
-                    System.out.print("{"+val.getWord()+"}"); //todo remove
                     lastWordSum += val.getCount();
                 }
             }
-
-            System.out.println(""); //TODO remove
         }
-
     }
-
-    /*public static void main(String[] args) throws Exception {
-
-        System.out.println("########################### start ###############################");
-        System.out.println("########################### start ###############################");
-
-        Configuration conf = new Configuration();
-        Job job = Job.getInstance(conf, "new method - step one");
-        job.setJarByClass(StepOne.class);
-        job.setMapperClass(StepOneMapper.class);
-        //job.setCombinerClass(IntSumReducer.class); //needed to be removed to have diffrente classe in map and reduce.
-        job.setReducerClass(StepOneReducer.class);
-        job.setPartitionerClass(StepOnePartitioner.class);
-
-        job.setMapOutputKeyClass(CarAndDecadeAndOrder.class);
-        job.setMapOutputValueClass(CountAndCdrAndPairCount.class);
-
-        job.setOutputKeyClass(WordPair.class);
-        job.setOutputValueClass(ThreeSums.class);
-
-        job.setInputFormatClass(SequenceFileInputFormat.class);
-
-        FileInputFormat.addInputPath(job, new Path(args[0]));
-        FileOutputFormat.setOutputPath(job, new Path(args[1]));
-
-        int result = job.waitForCompletion(true) ? 0 : 1;
-
-        System.out.println("########################### finish ###############################");
-        System.out.println("########################### finish ###############################");
-
-        System.out.println("Total Words in Corpus: " + job.getCounters().findCounter(Stepper.COUNTERS.TOTAL_WORD_COUNT).getValue());
-        System.out.println("Total KeyValues sent: " + job.getCounters().findCounter(Stepper.COUNTERS.KEY_VALUE_COUNT).getValue());
-
-        for (Counter counter : job.getCounters().getGroup(Stepper.WORD_COUNTERS)) {
-            System.out.println("  - " + counter.getName() + ": "+counter.getValue());
-        }
-
-        System.exit(result);
-    }*/
 }
