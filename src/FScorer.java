@@ -52,16 +52,16 @@ public class FScorer {
 
             for (int i = 0; i < THRESHOLD_TESTS_RESOLUTION; i++) {
                 tp = context.getCounter(VERDICT_COUNTERS, Verdict.TRUE_POSITIVE.name() + "_" + (i + 1)).getValue();
-                // tn = context.getCounter(VERDICT_COUNTERS, Verdict.TRUE_NEGATIVE.name() + "_" + (i + 1)).getValue();
+//                tn = context.getCounter(VERDICT_COUNTERS, Verdict.TRUE_NEGATIVE.name() + "_" + (i + 1)).getValue();
                 fp = context.getCounter(VERDICT_COUNTERS, Verdict.FALSE_POSITIVE.name() + "_" + (i + 1)).getValue();
                 fn = context.getCounter(VERDICT_COUNTERS, Verdict.FALSE_NEGATIVE.name() + "_" + (i + 1)).getValue();
-                // na = context.getCounter(VERDICT_COUNTERS, Verdict.NA.name() + "_" + (i + 1)).getValue();
+//                na = context.getCounter(VERDICT_COUNTERS, Verdict.NA.name() + "_" + (i + 1)).getValue();
 
                 precision = tp + fp != 0 ? (double) tp / (tp + fp) : 1;
                 recall    = tp + fn != 0 ? (double) tp / (tp + fn) : 1;
                 F = 2.0 * precision * recall / (precision + recall);
 
-                System.out.printf("Threshold: %.2f, F: %f\n", (i + 1) * TESTS_THRESHOLD_GAP, F);
+                System.out.println(String.format("Threshold: %.2f, F: %f", (i + 1) * TESTS_THRESHOLD_GAP, F));
             }
         }
 
@@ -113,7 +113,6 @@ public class FScorer {
         fScorerJob.setNumReduceTasks(0);
         fScorerJob.setOutputKeyClass(WordPair.class);
         fScorerJob.setOutputValueClass(VerdictWritableArray.class);
-
         FileInputFormat.addInputPath(fScorerJob, new Path(args[0]));
         FileOutputFormat.setOutputPath(fScorerJob, new Path(args[1]));
 
