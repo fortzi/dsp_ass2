@@ -20,11 +20,12 @@ public class Stepper {
         KEY_VALUE_COUNT
     }
     public static final String WORD_COUNTERS = "WORD_COUNTERS";
+    public static final String TOP_K = "TOP_K";
 
     public static void main(String[] args) throws IOException, ClassNotFoundException, InterruptedException {
 
-        if(args.length < 3) {
-            System.out.println("please enter input output1 output 2");
+        if(args.length < 4) {
+            System.out.println("please enter input output1 output2 k");
             return;
         }
 
@@ -53,10 +54,10 @@ public class Stepper {
 
         Configuration stepTwoConf = new Configuration();
 
-        stepTwoConf.setLong(COUNTERS.TOTAL_WORD_COUNT.name(), stepOneJob.getCounters().findCounter(COUNTERS.TOTAL_WORD_COUNT).getValue());
-        stepTwoConf.setLong(COUNTERS.KEY_VALUE_COUNT.name(), stepOneJob.getCounters().findCounter(COUNTERS.KEY_VALUE_COUNT).getValue());
         for (Counter counter : stepOneJob.getCounters().getGroup(Stepper.WORD_COUNTERS))
             stepTwoConf.setLong(counter.getName(), counter.getValue());
+
+        stepTwoConf.setInt(TOP_K, Integer.parseInt(args[4]));
 
         Job stepTwoJob = Job.getInstance(stepTwoConf, "Step Two");
         stepTwoJob.setJarByClass(StepTwo.class);
@@ -71,6 +72,16 @@ public class Stepper {
         FileOutputFormat.setOutputPath(stepTwoJob, new Path(args[2]));
 
         stepTwoJob.waitForCompletion(true);
+
+        /**********************************************************************************/
+        /* printing info */
+        /**********************************************************************************/
+
+        System.out.println("##################################################");
+        System.out.println("total key-value in each step:");
+        System.out.println("StepOne: " + stepOneJob.getCounters().findCounter(COUNTERS.KEY_VALUE_COUNT));
+        System.out.println("StepTwo: " + stepTwoJob.getCounters().findCounter(COUNTERS.KEY_VALUE_COUNT));
+        System.out.println("##################################################");
 
         System.exit(0);
     }

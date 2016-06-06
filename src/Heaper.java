@@ -1,5 +1,4 @@
 import java.util.Hashtable;
-import java.util.Iterator;
 import java.util.PriorityQueue;
 
 /**
@@ -8,9 +7,11 @@ import java.util.PriorityQueue;
 public class Heaper {
 
     private Hashtable<Integer, PQ> db;
+    private int topK;
 
-    public Heaper(){
+    public Heaper(int k){
         db = new Hashtable<Integer, PQ>();
+        topK = k;
     }
 
     public void insert(WordPair pair, double pmi) {
@@ -18,7 +19,7 @@ public class Heaper {
             db.put(pair.getDecade(), new PQ());
 
         PQ pq = db.get(pair.getDecade());
-        if(pq.size() < 10) {
+        if(pq.size() < topK) {
             pq.add(new PmiPair(pair, pmi));
         } else if(pq.peek().pmi < pmi) {
             pq.poll();
@@ -48,13 +49,8 @@ public class Heaper {
         @Override
         public int compareTo(PmiPair o) {
             double cmp =  this.pmi - o.pmi;
-
-            if(cmp < 0)
-                return -1;
-
-            if(cmp > 0)
-                return 1;
-
+            if(cmp < 0) return -1;
+            if(cmp > 0) return 1;
             return 0;
         }
 

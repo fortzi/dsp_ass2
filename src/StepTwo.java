@@ -24,6 +24,7 @@ public class StepTwo {
             long pairCount = Integer.parseInt(threeSums[2]);
 
             context.write(new WordPair(car, cdr, decade),new ThreeSums(carSum, cdrSum, pairCount));
+            context.getCounter(Stepper.COUNTERS.KEY_VALUE_COUNT).increment(1);
         }
     }
 
@@ -39,7 +40,7 @@ public class StepTwo {
         Heaper heaper;
 
         protected void setup(Reducer<WordPair, ThreeSums, WordPair, DoubleWritable>.Context context) throws IOException, InterruptedException {
-            heaper = new Heaper();
+            heaper = new Heaper(context.getConfiguration().getInt(Stepper.TOP_K,0));
         }
 
         public void reduce(WordPair key, Iterable<ThreeSums> values, Context context) throws IOException, InterruptedException {

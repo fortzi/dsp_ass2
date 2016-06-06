@@ -3,7 +3,9 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
+import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.SequenceFileOutputFormat;
 
 import java.io.IOException;
@@ -50,16 +52,16 @@ public class FScorer {
 
             for (int i = 0; i < THRESHOLD_TESTS_RESOLUTION; i++) {
                 tp = context.getCounter(VERDICT_COUNTERS, Verdict.TRUE_POSITIVE.name() + "_" + (i + 1)).getValue();
-//                tn = context.getCounter(VERDICT_COUNTERS, Verdict.TRUE_NEGATIVE.name() + "_" + (i + 1)).getValue();
+                // tn = context.getCounter(VERDICT_COUNTERS, Verdict.TRUE_NEGATIVE.name() + "_" + (i + 1)).getValue();
                 fp = context.getCounter(VERDICT_COUNTERS, Verdict.FALSE_POSITIVE.name() + "_" + (i + 1)).getValue();
                 fn = context.getCounter(VERDICT_COUNTERS, Verdict.FALSE_NEGATIVE.name() + "_" + (i + 1)).getValue();
-//                na = context.getCounter(VERDICT_COUNTERS, Verdict.NA.name() + "_" + (i + 1)).getValue();
+                // na = context.getCounter(VERDICT_COUNTERS, Verdict.NA.name() + "_" + (i + 1)).getValue();
 
                 precision = tp + fp != 0 ? (double) tp / (tp + fp) : 1;
                 recall    = tp + fn != 0 ? (double) tp / (tp + fn) : 1;
                 F = 2.0 * precision * recall / (precision + recall);
 
-                System.out.println(String.format("Threshold: %.2f, F: %f", (i + 1) * TESTS_THRESHOLD_GAP, F));
+                System.out.printf("Threshold: %.2f, F: %f\n", (i + 1) * TESTS_THRESHOLD_GAP, F);
             }
         }
 
@@ -77,7 +79,7 @@ public class FScorer {
             boolean localVerdict;
 
             for (int i = 0; i < THRESHOLD_TESTS_RESOLUTION; i++) {
-                localVerdict = pmi > (i + 1) * TESTS_THRESHOLD_GAP;
+                localVerdict = pmi >= (i + 1) * TESTS_THRESHOLD_GAP;
 
                 if (localVerdict && posPairs.containsKey(pair))
                     verdicts.setVerdict(i, Verdict.TRUE_POSITIVE);
@@ -111,12 +113,9 @@ public class FScorer {
         fScorerJob.setNumReduceTasks(0);
         fScorerJob.setOutputKeyClass(WordPair.class);
         fScorerJob.setOutputValueClass(VerdictWritableArray.class);
-        fScorerJob.setInputFormatClass(TextInputFormat.class);
 
-        TextInputFormat.addInputPath(fScorerJob, new Path(args[0]));
-        SequenceFileOutputFormat.setOutputPath(fScorerJob, new Path(args[1]));
-//        FileInputFormat.addInputPath(fScorerJob, new Path(args[0]));
-//        FileOutputFormat.setOutputPath(fScorerJob, new Path(args[1]));
+        FileInputFormat.addInputPath(fScorerJob, new Path(args[0]));
+        FileOutputFormat.setOutputPath(fScorerJob, new Path(args[1]));
 
         fScorerJob.waitForCompletion(true);
 
