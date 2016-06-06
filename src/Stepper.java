@@ -57,7 +57,7 @@ public class Stepper {
         for (Counter counter : stepOneJob.getCounters().getGroup(Stepper.WORD_COUNTERS))
             stepTwoConf.setLong(counter.getName(), counter.getValue());
 
-        stepTwoConf.setInt(TOP_K, Integer.parseInt(args[4]));
+        stepTwoConf.setInt(TOP_K, Integer.parseInt(args[3]));
 
         Job stepTwoJob = Job.getInstance(stepTwoConf, "Step Two");
         stepTwoJob.setJarByClass(StepTwo.class);
@@ -79,8 +79,8 @@ public class Stepper {
 
         System.out.println("##################################################");
         System.out.println("total key-value in each step:");
-        System.out.println("StepOne: " + stepOneJob.getCounters().findCounter(COUNTERS.KEY_VALUE_COUNT));
-        System.out.println("StepTwo: " + stepTwoJob.getCounters().findCounter(COUNTERS.KEY_VALUE_COUNT));
+        System.out.println("StepOne: " + stepOneJob.getCounters().findCounter(COUNTERS.KEY_VALUE_COUNT).getValue());
+        System.out.println("StepTwo: " + stepTwoJob.getCounters().findCounter(COUNTERS.KEY_VALUE_COUNT).getValue());
         System.out.println("##################################################");
 
         System.exit(0);
