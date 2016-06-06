@@ -62,6 +62,7 @@ public class Stepper {
         stepTwoJob.setJarByClass(StepTwo.class);
         stepTwoJob.setMapperClass(StepTwo.StepTwoMapper.class);
         stepTwoJob.setReducerClass(StepTwo.StepTwoReducer.class);
+        stepTwoJob.setPartitionerClass(StepTwo.StepTwoPartitioner.class);
         stepTwoJob.setMapOutputKeyClass(WordPair.class);
         stepTwoJob.setMapOutputValueClass(ThreeSums.class);
         stepTwoJob.setOutputKeyClass(WordPair.class);

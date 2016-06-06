@@ -1,6 +1,7 @@
 import org.apache.hadoop.io.DoubleWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.hadoop.mapreduce.Partitioner;
 import org.apache.hadoop.mapreduce.Reducer;
 
 import java.io.IOException;
@@ -26,7 +27,20 @@ public class StepTwo {
         }
     }
 
+    public static class StepTwoPartitioner extends Partitioner<WordPair, ThreeSums> {
+        @Override
+        public int getPartition(WordPair key, ThreeSums value, int numPartitions) {
+            return key.getDecade() % numPartitions;
+        }
+    }
+
     public static class StepTwoReducer extends Reducer<WordPair, ThreeSums, WordPair, DoubleWritable> {
+
+        Heaper heaper;
+
+        protected void setup(Reducer<WordPair, ThreeSums, WordPair, DoubleWritable>.Context context) throws IOException, InterruptedException {
+            heaper = new Heaper();
+        }
 
         public void reduce(WordPair key, Iterable<ThreeSums> values, Context context) throws IOException, InterruptedException {
 
@@ -44,7 +58,16 @@ public class StepTwo {
 
             long N = context.getConfiguration().getLong(String.valueOf(key.getDecade()), 0);
             double pmi = Math.log(N * pairSum / (carSum * cdrSum));
+
+            heaper.insert(key, pmi);
+
             context.write(key, new DoubleWritable(pmi));
+        }
+
+        protected void cleanup(Reducer<WordPair, ThreeSums, WordPair, DoubleWritable>.Context context) throws IOException, InterruptedException {
+            System.out.println("###################################");
+            heaper.print();
+            System.out.println("###################################");
         }
     }
 }
