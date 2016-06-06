@@ -37,8 +37,8 @@ public class Stepper {
         stepOneJob.setMapperClass(StepOne.StepOneMapper.class);
         stepOneJob.setReducerClass(StepOne.StepOneReducer.class);
         stepOneJob.setPartitionerClass(StepOne.StepOnePartitioner.class);
-        stepOneJob.setMapOutputKeyClass(CarAndDecadeAndOrder.class);
-        stepOneJob.setMapOutputValueClass(CountAndCdrAndPairCount.class);
+        stepOneJob.setMapOutputKeyClass(CarDecadeOrder.class);
+        stepOneJob.setMapOutputValueClass(CountCdrPairCount.class);
         stepOneJob.setOutputKeyClass(WordPair.class);
         stepOneJob.setOutputValueClass(ThreeSums.class);
         stepOneJob.setInputFormatClass(SequenceFileInputFormat.class);

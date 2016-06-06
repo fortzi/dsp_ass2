@@ -1,4 +1,5 @@
 /**
+ *
  * Created by doubled on 0015, 15, 5, 2016.
  */
 
@@ -8,25 +9,25 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-class CountAndCdrAndPairCount implements Writable {
+class CountCdrPairCount implements Writable {
 
     private int count;
     private String word;
     private int pairCount;
 
-    public CountAndCdrAndPairCount() {
+    public CountCdrPairCount() {
         word = null;
         count = 0;
         pairCount = 0;
     }
 
-    public CountAndCdrAndPairCount(int count, String word, int pairCount) {
+    public CountCdrPairCount(int count, String word, int pairCount) {
         this.count = count;
         this.word = word;
         this.pairCount = pairCount;
     }
 
-    public CountAndCdrAndPairCount(String wordSerialization, int startIndex) {
+    public CountCdrPairCount(String wordSerialization, int startIndex) {
         String[] toks = wordSerialization.split("\t");
         this.count = Integer.parseInt(toks[startIndex]);
         this.word = toks[startIndex+1];

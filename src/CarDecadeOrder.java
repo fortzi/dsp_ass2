@@ -1,33 +1,36 @@
 /**
+ *
  * Created by doubled on 0015, 15, 5, 2016.
  */
 
+import com.sun.istack.internal.NotNull;
+import org.apache.commons.lang.NullArgumentException;
 import org.apache.hadoop.io.WritableComparable;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-class CarAndDecadeAndOrder implements WritableComparable<CarAndDecadeAndOrder> {
+class CarDecadeOrder implements WritableComparable<CarDecadeOrder> {
 
     private String word;
     private int decade;
     private int order;
 
-    public CarAndDecadeAndOrder() {
+    public CarDecadeOrder() {
         word = null;
         decade = -1;
         order = 0;
 
     }
 
-    public CarAndDecadeAndOrder(int year, String word, int order) {
+    public CarDecadeOrder(int year, String word, int order) {
         this.word = word;
         this.decade = year - (year % 10);
         this.order = order;
     }
 
-    public CarAndDecadeAndOrder(String wordSerialization, int startIndex) {
+    public CarDecadeOrder(String wordSerialization, int startIndex) {
         String[] toks = wordSerialization.split("\t");
         this.word = toks[startIndex];
         this.decade = Integer.parseInt(toks[startIndex+1]);
@@ -53,7 +56,9 @@ class CarAndDecadeAndOrder implements WritableComparable<CarAndDecadeAndOrder> {
     }
 
     @Override
-    public int compareTo(CarAndDecadeAndOrder other) {
+    public int compareTo(CarDecadeOrder other) {
+        if (other == null)
+            throw new NullArgumentException("other");
 
         if(this.decade < other.decade)
             return -1;

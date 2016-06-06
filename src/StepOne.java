@@ -9,7 +9,7 @@ import java.util.Arrays;
 
 public class StepOne {
 
-    public static class StepOneMapper extends Mapper<Object, Text, CarAndDecadeAndOrder, CountAndCdrAndPairCount>{
+    public static class StepOneMapper extends Mapper<Object, Text, CarDecadeOrder, CountCdrPairCount>{
 
         private static ArrayList<String> stopwords = new ArrayList<String>(Arrays.asList("a","able","about","across","after","all","almost","also","am","among","an","and","any","are","as","at","be","because","been","but","by","can","cannot","could","dear","did","do","does","either","else","ever","every","for","from","get","got","had","has","have","he","her","hers","him","his","how","however","i","if","in","into","is","it","its","just","least","let","like","likely","may","me","might","most","must","my","neither","no","nor","not","of","off","often","on","only","or","other","our","own","rather","said","say","says","she","should","since","so","some","than","that","the","their","them","then","there","these","they","this","tis","to","too","twas","us","wants","was","we","were","what","when","where","which","while","who","whom","why","will","with","would","yet","you","your"));
 
@@ -39,7 +39,7 @@ public class StepOne {
             // dispatching one for each legal word for the count process (order = 0)
             for(String word : ngram) {
                 if (isOK(word)) {
-                    context.write(new CarAndDecadeAndOrder(year, word, 0), new CountAndCdrAndPairCount(occurrences, "", 0));
+                    context.write(new CarDecadeOrder(year, word, 0), new CountCdrPairCount(occurrences, "", 0));
                     context.getCounter(Stepper.COUNTERS.TOTAL_WORD_COUNT).increment(occurrences);
                     context.getCounter(Stepper.COUNTERS.KEY_VALUE_COUNT).increment(1);
                     context.getCounter(Stepper.WORD_COUNTERS, getDecade(year).toString()).increment(occurrences);
@@ -55,31 +55,31 @@ public class StepOne {
                     continue;
 
                 if (isOK(ngram[i])) {
-                    context.write(new CarAndDecadeAndOrder(year, ngram[i], 1), new CountAndCdrAndPairCount(0, ngram[pivot], occurrences));
-                    context.write(new CarAndDecadeAndOrder(year, ngram[pivot], 1), new CountAndCdrAndPairCount(0, ngram[i], 0));
+                    context.write(new CarDecadeOrder(year, ngram[i], 1), new CountCdrPairCount(0, ngram[pivot], occurrences));
+                    context.write(new CarDecadeOrder(year, ngram[pivot], 1), new CountCdrPairCount(0, ngram[i], 0));
                     context.getCounter(Stepper.COUNTERS.KEY_VALUE_COUNT).increment(2);
                 }
             }
         }
     }
 
-    public static class StepOnePartitioner extends Partitioner<CarAndDecadeAndOrder, CountAndCdrAndPairCount> {
+    public static class StepOnePartitioner extends Partitioner<CarDecadeOrder, CountCdrPairCount> {
         @Override
-        public int getPartition(CarAndDecadeAndOrder car, CountAndCdrAndPairCount cdr, int numPartitions) {
+        public int getPartition(CarDecadeOrder car, CountCdrPairCount cdr, int numPartitions) {
             return car.getWord().charAt(0) % numPartitions;
         }
     }
 
-    public static class StepOneReducer extends Reducer<CarAndDecadeAndOrder,CountAndCdrAndPairCount, WordPair, ThreeSums> {
+    public static class StepOneReducer extends Reducer<CarDecadeOrder, CountCdrPairCount, WordPair, ThreeSums> {
         private String lastWord = "";
         private long carSum, cdrSum, lastWordSum;
         private String car, cdr;
 
-        public void reduce(CarAndDecadeAndOrder key, Iterable<CountAndCdrAndPairCount> values, Context context)
+        public void reduce(CarDecadeOrder key, Iterable<CountCdrPairCount> values, Context context)
                 throws IOException, InterruptedException {
 
             if(key.getWord().equals(lastWord)) {
-                for (CountAndCdrAndPairCount val : values) {
+                for (CountCdrPairCount val : values) {
                     //the middle word will sometimes add itself with null to be counted
                     if(val.getWord().equals("")) {
                         continue;
@@ -99,14 +99,12 @@ public class StepOne {
 
                     context.write(new WordPair(car, cdr, key.getDecade()), new ThreeSums(carSum, cdrSum, val.getPairCount()));
                 }
-            }
-            else {
+            } else {
                 lastWordSum = 0;
                 lastWord = key.getWord();
 
-                for (CountAndCdrAndPairCount val : values) {
+                for (CountCdrPairCount val : values)
                     lastWordSum += val.getCount();
-                }
             }
         }
     }
