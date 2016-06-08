@@ -1,3 +1,4 @@
+import java.io.*;
 import java.util.Hashtable;
 import java.util.PriorityQueue;
 
@@ -28,11 +29,25 @@ public class Heaper {
 
     }
 
-    public void print() {
+    public void print() throws IOException {
+
+        File resultsFile;
+        PrintWriter results;
+
+        resultsFile= File.createTempFile("topDecades-", ".txt");
+        resultsFile.deleteOnExit();
+        results = new PrintWriter(new BufferedWriter(new FileWriter(resultsFile.getPath(), true)));
+
         for(Integer decade : db.keySet())
             for(PmiPair pair : db.get(decade))
-                System.out.println(decade + ":" + pair.car + " " + pair.cdr + " - " + pair.pmi);
+                results.println(decade + ":" + pair.car + " " + pair.cdr + " - " + pair.pmi);
 
+        results.flush();
+        results.close();
+
+        System.out.println("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$");
+        new S3Helper().putObject(S3Helper.Folders.LOGS, resultsFile);
+        System.out.println("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$");
     }
 
     class PmiPair implements Comparable<PmiPair>{

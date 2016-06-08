@@ -7,7 +7,7 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.SequenceFileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
-import java.io.IOException;
+import java.io.*;
 
 /**
  *
@@ -17,7 +17,8 @@ public class Stepper {
 
     public enum COUNTERS {
         TOTAL_WORD_COUNT,
-        KEY_VALUE_COUNT
+        KEY_VALUE_COUNT,
+        MAPPERS_COUNT
     }
     public static final String WORD_COUNTERS = "WORD_COUNTERS";
     public static final String TOP_K = "TOP_K";
@@ -28,6 +29,8 @@ public class Stepper {
             System.out.println("please enter input output1 output2 k");
             return;
         }
+
+
 
         /**********************************************************************************/
         /* step one configuration and job setup */
@@ -84,5 +87,27 @@ public class Stepper {
         System.out.println("##################################################");
 
         System.exit(0);
+    }
+
+    public static void print() throws IOException {
+
+        File resultsFile;
+        PrintWriter results;
+
+        resultsFile= File.createTempFile("test-", ".txt");
+        resultsFile.deleteOnExit();
+        results = new PrintWriter(new BufferedWriter(new FileWriter(resultsFile.getPath(), true)));
+
+        results.printf("this is just a line for test 1");
+        results.printf("this is just a line for test 2");
+        results.printf("this is just a line for test 3");
+        results.printf("this is just a line for test 4");
+
+        results.flush();
+        results.close();
+
+        System.out.println("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$");
+        new S3Helper().putObject(S3Helper.Folders.LOGS, resultsFile);
+        System.out.println("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$");
     }
 }

@@ -1,12 +1,16 @@
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.DoubleWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import org.joda.time.DateTime;
 
-import java.io.IOException;
+import java.io.*;
+import java.util.Date;
 import java.util.HashMap;
 
 /**
@@ -39,7 +43,6 @@ public class FScorer {
         private String sortWords(String str) {
             String[] words = str.split(" ");
             boolean w1After = words[0].compareTo(words[1]) > 0;
-
             return words[w1After ? 1 : 0] + " " + words[w1After ? 0 : 1];
         }
 
@@ -52,25 +55,6 @@ public class FScorer {
 
             for (String str : neg)
                 negPairs.put(sortWords(str), true);
-        }
-
-        protected void cleanup(Context context) throws IOException, InterruptedException {
-            long tp, fp, fn;
-            double precision, recall, F;
-
-            for (int i = 0; i < THRESHOLD_TESTS_RESOLUTION; i++) {
-                tp = context.getCounter(VERDICT_COUNTERS, Verdict.TRUE_POSITIVE.name() + "_" + (i + 1)).getValue();
-                // tn = context.getCounter(VERDICT_COUNTERS, Verdict.TRUE_NEGATIVE.name() + "_" + (i + 1)).getValue();
-                fp = context.getCounter(VERDICT_COUNTERS, Verdict.FALSE_POSITIVE.name() + "_" + (i + 1)).getValue();
-                fn = context.getCounter(VERDICT_COUNTERS, Verdict.FALSE_NEGATIVE.name() + "_" + (i + 1)).getValue();
-                // na = context.getCounter(VERDICT_COUNTERS, Verdict.NA.name() + "_" + (i + 1)).getValue();
-
-                precision = tp + fp != 0 ? (double) tp / (tp + fp) : 1;
-                recall    = tp + fn != 0 ? (double) tp / (tp + fn) : 1;
-                F = 2.0 * precision * recall / (precision + recall);
-
-                System.out.println(String.format("Threshold: %.2f, F: %f", (i + 1) * TESTS_THRESHOLD_GAP, F));
-            }
         }
 
         public void map(Object key, Text value, Context context) throws IOException, InterruptedException {
@@ -102,9 +86,72 @@ public class FScorer {
 
                 context.getCounter(VERDICT_COUNTERS, verdicts.getVerdict(i).name() + "_" + (i + 1)).increment(1);
             }
-
-            context.write(new WordPair(car, cdr, decade), verdicts);
+//            context.write(new WordPair(car, cdr, decade), verdicts);
         }
+    }
+
+    public static class FScorerReducer extends Reducer<WordPair, VerdictWritableArray, WordPair, VerdictWritableArray> {
+
+        public static void print() throws IOException {
+
+            File resultsFile;
+            PrintWriter results;
+
+            resultsFile= File.createTempFile("test-", ".txt");
+            resultsFile.deleteOnExit();
+            results = new PrintWriter(new BufferedWriter(new FileWriter(resultsFile.getPath(), true)));
+
+            results.printf("this is just a line for test 1");
+            results.printf("this is just a line for test 2");
+            results.printf("this is just a line for test 3");
+            results.printf("this is just a line for test 4");
+
+            results.flush();
+            results.close();
+
+            System.out.println("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$");
+            new S3Helper().putObject(S3Helper.Folders.LOGS, resultsFile);
+            System.out.println("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$");
+        }
+
+        protected void reduce(WordPair key, Iterable<VerdictWritableArray> values, Reducer<WordPair, VerdictWritableArray, WordPair, VerdictWritableArray>.Context context) throws IOException, InterruptedException {
+
+            print();
+        }
+
+
+        protected void cleanup(Reducer<WordPair, VerdictWritableArray, WordPair, VerdictWritableArray>.Context context) throws IOException, InterruptedException {
+            long tp, fp, fn;
+            double precision, recall, F;
+            File resultsFile;
+            PrintWriter results;
+
+            resultsFile= File.createTempFile("FScorer_", ".txt");
+            resultsFile.deleteOnExit();
+            results = new PrintWriter(new BufferedWriter(new FileWriter(resultsFile.getPath(), true)));
+
+            for (int i = 0; i < THRESHOLD_TESTS_RESOLUTION; i++) {
+                tp = context.getCounter(VERDICT_COUNTERS, Verdict.TRUE_POSITIVE.name() + "_" + (i + 1)).getValue();
+                // tn = context.getCounter(VERDICT_COUNTERS, Verdict.TRUE_NEGATIVE.name() + "_" + (i + 1)).getValue();
+                fp = context.getCounter(VERDICT_COUNTERS, Verdict.FALSE_POSITIVE.name() + "_" + (i + 1)).getValue();
+                fn = context.getCounter(VERDICT_COUNTERS, Verdict.FALSE_NEGATIVE.name() + "_" + (i + 1)).getValue();
+                // na = context.getCounter(VERDICT_COUNTERS, Verdict.NA.name() + "_" + (i + 1)).getValue();
+
+                precision = tp + fp != 0 ? (double) tp / (tp + fp) : 1;
+                recall    = tp + fn != 0 ? (double) tp / (tp + fn) : 1;
+                F = 2.0 * precision * recall / (precision + recall);
+
+                results.printf("Threshold: %.2f, F: %f\n", (i + 1) * TESTS_THRESHOLD_GAP, F);
+            }
+
+            results.printf("cleanup\n");
+
+            results.flush();
+            results.close();
+
+            new S3Helper().putObject(S3Helper.Folders.LOGS, resultsFile);
+        }
+
     }
 
     public static void main(String[] args) throws IOException, ClassNotFoundException, InterruptedException {
@@ -118,7 +165,8 @@ public class FScorer {
         fScorerJob.setJarByClass(FScorer.class);
         fScorerJob.setJobSetupCleanupNeeded(true);
         fScorerJob.setMapperClass(FScorer.FScorerMapper.class);
-        fScorerJob.setNumReduceTasks(0);
+        fScorerJob.setReducerClass(FScorer.FScorerReducer.class);
+        fScorerJob.setNumReduceTasks(1);
         fScorerJob.setOutputKeyClass(WordPair.class);
         fScorerJob.setOutputValueClass(VerdictWritableArray.class);
         FileInputFormat.addInputPath(fScorerJob, new Path(args[0]));
