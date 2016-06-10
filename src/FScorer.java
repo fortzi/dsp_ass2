@@ -84,7 +84,7 @@ public class FScorer {
 
                 context.getCounter(VERDICT_COUNTERS, verdicts.getVerdict(i).name() + "_" + (i + 1)).increment(1);
             }
-            context.write(new Text("doron"), new Text("dalet"));
+            //context.write(new Text("doron"), new Text("dalet"));
         }
     }
 
@@ -122,9 +122,9 @@ public class FScorer {
         }
 
 
-        protected void reduce(Text key, Iterable<Text> values, Reducer<Text, Text, Text, Text>.Context context) throws IOException, InterruptedException {
+        /*protected void reduce(Text key, Iterable<Text> values, Reducer<Text, Text, Text, Text>.Context context) throws IOException, InterruptedException {
             context.write(key, key);
-        }
+        }*/
 
         protected void cleanup(Reducer<Text, Text, Text, Text>.Context context) throws IOException, InterruptedException {
             long tp, fp, fn;
@@ -147,7 +147,6 @@ public class FScorer {
                 recall    = tp + fn != 0 ? (double) tp / (tp + fn) : 1;
                 F = 2.0 * precision * recall / (precision + recall);
 
-                System.out.println("kaki:");
                 System.out.printf("Threshold: %.2f, tp: %d, fp: %d, fn: %d\n", (i + 1) * TESTS_THRESHOLD_GAP, tp, fp, fn);
                 results.printf("Threshold: %.2f, F: %f\n", (i + 1) * TESTS_THRESHOLD_GAP, F);
             }
