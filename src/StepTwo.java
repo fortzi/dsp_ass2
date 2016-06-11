@@ -52,12 +52,12 @@ public class StepTwo {
             for (ThreeSums val : values) {
                 // getCarSum() will always return either 0 or the true value, so we use max to take
                 // the true value, regardless of when it comes.
-                carSum = Math.max(carSum, val.getCarSum());
-                cdrSum = Math.max(cdrSum, val.getCarSum());
+                carSum = Math.max(Math.max(carSum, val.getCarSum()), 1);
+                cdrSum = Math.max(Math.max(cdrSum, val.getCarSum()), 1);
                 pairSum += val.getPairSum();
             }
 
-            long N = context.getConfiguration().getLong(String.valueOf(key.getDecade()), 0);
+            long N = context.getConfiguration().getLong(String.valueOf(key.getDecade()), 1);
             double pmi = Math.log(N * pairSum / (carSum * cdrSum));
 
             heaper.insert(key, pmi);
