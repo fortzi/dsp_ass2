@@ -23,8 +23,11 @@ public class Heaper {
         if(pq.size() < topK) {
             pq.add(new PmiPair(pair, pmi));
         } else if(pq.peek().pmi < pmi) {
-            pq.poll();
-            pq.add(new PmiPair(pair, pmi));
+            PmiPair old = pq.poll();
+            old.car = pair.getWord1();
+            old.cdr = pair.getWord2();
+            old.pmi = pmi;
+            pq.add(old);
         }
 
     }
