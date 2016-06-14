@@ -48,17 +48,22 @@ public class StepTwo {
             long carSum = 0;
             long cdrSum = 0;
             long pairSum = 0;
+            double pmi=-1;
 
             for (ThreeSums val : values) {
                 // getCarSum() will always return either 0 or the true value, so we use max to take
                 // the true value, regardless of when it comes.
                 carSum = Math.max(carSum, val.getCarSum());
-                cdrSum = Math.max(cdrSum, val.getCarSum());
+                cdrSum = Math.max(cdrSum, val.getCdrSum());
                 pairSum += val.getPairSum();
             }
 
+            //if its the same word. one of the sums will be left empty.
+            if(key.getWord1().equals(key.getWord2()))
+                carSum = cdrSum = Math.max(carSum,cdrSum);
+
             long N = context.getConfiguration().getLong(String.valueOf(key.getDecade()), 0);
-            double pmi = Math.log(N * pairSum / (carSum * cdrSum));
+            pmi = Math.log(N * pairSum / (carSum * cdrSum));
 
             heaper.insert(key, pmi);
 
@@ -66,9 +71,7 @@ public class StepTwo {
         }
 
         protected void cleanup(Reducer<WordPair, ThreeSums, WordPair, DoubleWritable>.Context context) throws IOException, InterruptedException {
-            System.out.println("###################################");
             heaper.print();
-            System.out.println("###################################");
         }
     }
 }

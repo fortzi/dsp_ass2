@@ -45,9 +45,10 @@ public class Heaper {
         results.flush();
         results.close();
 
-        System.out.println("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$");
-        new S3Helper().putObject(S3Helper.Folders.LOGS, resultsFile);
-        System.out.println("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$");
+        //do not add empty file to s3
+        //(this function will be called somtimes from reducer cleanup even when he didnt reduce anything)
+        if(!db.isEmpty())
+            new S3Helper().putObject(S3Helper.Folders.LOGS, resultsFile);
     }
 
     class PmiPair implements Comparable<PmiPair>{

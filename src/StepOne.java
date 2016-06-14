@@ -25,6 +25,9 @@ public class StepOne {
             String[] dbrow = value.toString().split("\t");
             String[] ngram = dbrow[0].split("\\s+");
 
+            if(dbrow.length < 3)
+                return;
+
             int year = Integer.parseInt(dbrow[1]);
             int occurrences = Integer.parseInt(dbrow[2]);
 
@@ -51,7 +54,7 @@ public class StepOne {
                 return;
 
             for (int i = 0; i < ngram.length; i++) {
-                if (i == pivot)
+                if (i==pivot)
                     continue;
 
                 if (isOK(ngram[i])) {
