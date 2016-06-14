@@ -58,7 +58,7 @@ public class StepTwo {
                 pairSum += val.getPairSum();
             }
 
-            //if its the same word. one of the sums will be left empty.
+            //if its the same word. one of the sums will be left empty .
             if(key.getWord1().equals(key.getWord2()))
                 carSum = cdrSum = Math.max(carSum,cdrSum);
 
