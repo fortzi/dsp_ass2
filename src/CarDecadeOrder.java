@@ -37,6 +37,14 @@ class CarDecadeOrder implements WritableComparable<CarDecadeOrder> {
         this.order = Integer.parseInt(toks[startIndex+2]);
     }
 
+    public CarDecadeOrder set(int year, String word, int order) {
+        this.word = word;
+        this.decade = year - (year % 10);
+        this.order = order;
+
+        return this;
+    }
+
     public String getWord() { return word; }
     public int getDecade() { return decade; }
     public int getOrder() { return order; }

@@ -1,4 +1,5 @@
 /**
+ *
  * Created by doubled on 0015, 15, 5, 2016.
  */
 import java.io.DataInput;
@@ -30,6 +31,14 @@ class WordPair implements WritableComparable<WordPair> {
         this.word1 = toks[startIndex];
         this.word2 = toks[startIndex+1];
         this.decade = Integer.parseInt(toks[startIndex+2]);
+    }
+
+    public WordPair set(String word1, String word2, int year) {
+        this.word1 = word1;
+        this.word2 = word2;
+        this.decade = year - (year % 10);
+
+        return this;
     }
 
     public String getWord1() { return word1; }

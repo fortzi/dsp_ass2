@@ -9,6 +9,8 @@ import java.io.IOException;
 public class StepTwo {
 
     public static class StepTwoMapper extends Mapper<Object, Text, WordPair, ThreeSums>{
+        private WordPair newKey = new WordPair();
+        private ThreeSums newValue = new ThreeSums();
 
         public void map(Object key, Text value, Context context) throws IOException, InterruptedException {
             String[] keyValue = value.toString().split("\t");
@@ -23,7 +25,7 @@ public class StepTwo {
             long cdrSum = Integer.parseInt(threeSums[1]);
             long pairCount = Integer.parseInt(threeSums[2]);
 
-            context.write(new WordPair(car, cdr, decade),new ThreeSums(carSum, cdrSum, pairCount));
+            context.write(newKey.set(car, cdr, decade), newValue.set(carSum, cdrSum, pairCount));
             context.getCounter(Stepper.COUNTERS.KEY_VALUE_COUNT).increment(1);
         }
     }
@@ -37,10 +39,11 @@ public class StepTwo {
 
     public static class StepTwoReducer extends Reducer<WordPair, ThreeSums, WordPair, DoubleWritable> {
 
-        Heaper heaper;
+        private Heaper heaper;
+        private DoubleWritable newValue = new DoubleWritable();
 
         protected void setup(Reducer<WordPair, ThreeSums, WordPair, DoubleWritable>.Context context) throws IOException, InterruptedException {
-            heaper = new Heaper(context.getConfiguration().getInt(Stepper.TOP_K,0));
+            heaper = new Heaper(context.getConfiguration().getInt(Stepper.TOP_K, 0));
         }
 
         public void reduce(WordPair key, Iterable<ThreeSums> values, Context context) throws IOException, InterruptedException {
@@ -48,7 +51,7 @@ public class StepTwo {
             long carSum = 0;
             long cdrSum = 0;
             long pairSum = 0;
-            double pmi=-1;
+            double pmi;
 
             for (ThreeSums val : values) {
                 // getCarSum() will always return either 0 or the true value, so we use max to take
@@ -67,7 +70,8 @@ public class StepTwo {
 
             heaper.insert(key, pmi);
 
-            context.write(key, new DoubleWritable(pmi));
+            newValue.set(pmi);
+            context.write(key, newValue);
         }
 
         protected void cleanup(Reducer<WordPair, ThreeSums, WordPair, DoubleWritable>.Context context) throws IOException, InterruptedException {

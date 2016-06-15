@@ -4,48 +4,57 @@ import org.apache.hadoop.mapreduce.Partitioner;
 import org.apache.hadoop.mapreduce.Reducer;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.HashMap;
 
 public class StepOne {
 
     public static class StepOneMapper extends Mapper<Object, Text, CarDecadeOrder, CountCdrPairCount>{
 
-        private static ArrayList<String> stopwords = new ArrayList<String>(Arrays.asList("a", "about", "above", "after", "again", "against", "all", "am", "an", "and", "any", "are", "aren't", "as", "at", "be", "because", "been", "before", "being", "below", "between", "both", "but", "by", "can't", "cannot", "could", "couldn't", "did", "didn't", "do", "does", "doesn't", "doing", "don't", "down", "during", "each", "few", "for", "from", "further", "had", "hadn't", "has", "hasn't", "have", "haven't", "having", "he", "he'd", "he'll", "he's", "her", "here", "here's", "hers", "herself", "him", "himself", "his", "how", "how's", "i", "i'd", "i'll", "i'm", "i've", "if", "in", "into", "is", "isn't", "it", "it's", "its", "itself", "let's", "me", "more", "most", "mustn't", "my", "myself", "no", "nor", "not", "of", "off", "on", "once", "only", "or", "other", "ought", "our", "ours	ourselves", "out", "over", "own", "same", "shan't", "she", "she'd", "she'll", "she's", "should", "shouldn't", "so", "some", "such", "than", "that", "that's", "the", "their", "theirs", "them", "themselves", "then", "there", "there's", "these", "they", "they'd", "they'll", "they're", "they've", "this", "those", "through", "to", "too", "under", "until", "up", "very", "was", "wasn't", "we", "we'd", "we'll", "we're", "we've", "were", "weren't", "what", "what's", "when", "when's", "where", "where's", "which", "while", "who", "who's", "whom", "why", "why's", "with", "won't", "would", "wouldn't", "you", "you'd", "you'll", "you're", "you've", "your", "yours", "yourself", "yourselves"));
+        private String[] stopwords = { "a", "about", "above", "after", "again", "against", "all", "am", "an", "and", "any", "are", "aren't", "as", "at", "be", "because", "been", "before", "being", "below", "between", "both", "but", "by", "can't", "cannot", "could", "couldn't", "did", "didn't", "do", "does", "doesn't", "doing", "don't", "down", "during", "each", "few", "for", "from", "further", "had", "hadn't", "has", "hasn't", "have", "haven't", "having", "he", "he'd", "he'll", "he's", "her", "here", "here's", "hers", "herself", "him", "himself", "his", "how", "how's", "i", "i'd", "i'll", "i'm", "i've", "if", "in", "into", "is", "isn't", "it", "it's", "its", "itself", "let's", "me", "more", "most", "mustn't", "my", "myself", "no", "nor", "not", "of", "off", "on", "once", "only", "or", "other", "ought", "our", "ours	ourselves", "out", "over", "own", "same", "shan't", "she", "she'd", "she'll", "she's", "should", "shouldn't", "so", "some", "such", "than", "that", "that's", "the", "their", "theirs", "them", "themselves", "then", "there", "there's", "these", "they", "they'd", "they'll", "they're", "they've", "this", "those", "through", "to", "too", "under", "until", "up", "very", "was", "wasn't", "we", "we'd", "we'll", "we're", "we've", "were", "weren't", "what", "what's", "when", "when's", "where", "where's", "which", "while", "who", "who's", "whom", "why", "why's", "with", "won't", "would", "wouldn't", "you", "you'd", "you'll", "you're", "you've", "your", "yours", "yourself", "yourselves" };
+        private HashMap<String, Boolean> stopWordsHash;
+        private CarDecadeOrder newKey = new CarDecadeOrder();
+        private CountCdrPairCount newValue = new CountCdrPairCount();
 
-        private static boolean isOK(String str) {
-            return !stopwords.contains(str.toLowerCase()) && str.length() > 1;
+        @Override
+        protected void setup(Mapper.Context context) throws IOException, InterruptedException {
+            stopWordsHash = new HashMap<String, Boolean>();
+            for(String word : stopwords)
+                stopWordsHash.put(word, null);
         }
 
-        public static Integer getDecade(int year) {
+        private boolean isOK(String str) {
+            return str.length() > 1 && !stopWordsHash.containsKey(str);
+        }
+
+        public int getDecade(int year) {
             return (year - (year % 10));
         }
 
         public void map(Object key, Text value, Context context) throws IOException, InterruptedException {
             String[] dbrow = value.toString().split("\t");
-            String[] ngram = dbrow[0].split("\\s+");
-
-            if(dbrow.length < 3)
+            if(dbrow.length < 3) {
                 return;
+            }
 
             int year = Integer.parseInt(dbrow[1]);
+            // according to assignment instructions:
+            if(year < 1900) {
+                return;
+            }
+
+            String[] ngram = dbrow[0].split("\\s+");
+
+            String decade = String.valueOf(getDecade(year));
             int occurrences = Integer.parseInt(dbrow[2]);
 
             // normalizing words.
-            for(int i = 0; i < ngram.length; i++)
+            for(int i = 0; i < ngram.length; i++) {
                 ngram[i] = ngram[i].replaceAll("[^a-zA-Z]", "").toLowerCase();
-
-            // according to assignment instructions:
-            if(year < 1900)
-                return;
-
-            // dispatching one for each legal word for the count process (order = 0)
-            for(String word : ngram) {
-                if (isOK(word)) {
-                    context.write(new CarDecadeOrder(year, word, 0), new CountCdrPairCount(occurrences, "", 0));
+                if (isOK(ngram[i])) {
+                    context.write(newKey.set(year, ngram[i], 0), newValue.set(occurrences, "", 0));
                     context.getCounter(Stepper.COUNTERS.TOTAL_WORD_COUNT).increment(occurrences);
                     context.getCounter(Stepper.COUNTERS.KEY_VALUE_COUNT).increment(1);
-                    context.getCounter(Stepper.WORD_COUNTERS, getDecade(year).toString()).increment(occurrences);
+                    context.getCounter(Stepper.WORD_COUNTERS, decade).increment(occurrences);
                 }
             }
 
@@ -54,12 +63,12 @@ public class StepOne {
                 return;
 
             for (int i = 0; i < ngram.length; i++) {
-                if (i==pivot)
+                if (i == pivot)
                     continue;
 
                 if (isOK(ngram[i])) {
-                    context.write(new CarDecadeOrder(year, ngram[i], 1), new CountCdrPairCount(0, ngram[pivot], occurrences));
-                    context.write(new CarDecadeOrder(year, ngram[pivot], 1), new CountCdrPairCount(0, ngram[i], 0));
+                    context.write(newKey.set(year, ngram[i], 1), newValue.set(0, ngram[pivot], occurrences));
+                    context.write(newKey.set(year, ngram[pivot], 1), newValue.set(0, ngram[i], 0));
                     context.getCounter(Stepper.COUNTERS.KEY_VALUE_COUNT).increment(2);
                 }
             }
@@ -77,16 +86,14 @@ public class StepOne {
         private String lastWord = "";
         private long carSum, cdrSum, lastWordSum;
         private String car, cdr;
+        private WordPair newKey = new WordPair();
+        private ThreeSums newValue = new ThreeSums();
 
         public void reduce(CarDecadeOrder key, Iterable<CountCdrPairCount> values, Context context)
                 throws IOException, InterruptedException {
 
             if(key.getWord().equals(lastWord)) {
                 for (CountCdrPairCount val : values) {
-                    //the middle word will sometimes add itself with null to be counted
-                    if(val.getWord().equals("")) {
-                        continue;
-                    }
 
                     if (key.getWord().compareTo(val.getWord()) < 0) {
                         carSum = lastWordSum;
@@ -100,7 +107,7 @@ public class StepOne {
                         cdr = key.getWord();
                     }
 
-                    context.write(new WordPair(car, cdr, key.getDecade()), new ThreeSums(carSum, cdrSum, val.getPairCount()));
+                    context.write(newKey.set(car, cdr, key.getDecade()), newValue.set(carSum, cdrSum, val.getPairCount()));
                 }
             } else {
                 lastWordSum = 0;

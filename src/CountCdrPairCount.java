@@ -3,6 +3,7 @@
  * Created by doubled on 0015, 15, 5, 2016.
  */
 
+import org.apache.hadoop.fs.shell.Count;
 import org.apache.hadoop.io.Writable;
 
 import java.io.DataInput;
@@ -32,6 +33,14 @@ class CountCdrPairCount implements Writable {
         this.count = Integer.parseInt(toks[startIndex]);
         this.word = toks[startIndex+1];
         this.pairCount = Integer.parseInt(toks[startIndex+2]);
+    }
+
+    public CountCdrPairCount set(int count, String word, int pairCount) {
+        this.count = count;
+        this.word = word;
+        this.pairCount = pairCount;
+
+        return this;
     }
 
     public int getCount() { return count; }

@@ -13,6 +13,10 @@ public class VerdictWritableArray implements Writable {
 
     FScorer.Verdict[] verdicts;
 
+    public VerdictWritableArray() {
+
+    }
+
     public VerdictWritableArray(int size) {
         this.verdicts = new FScorer.Verdict[size];
     }
@@ -33,7 +37,11 @@ public class VerdictWritableArray implements Writable {
 
     @Override
     public void readFields(DataInput dataInput) throws IOException {
-        throw new NotImplementedException();
+        String[] out = dataInput.readUTF().split(" ");
+        verdicts = new FScorer.Verdict[out.length];
+
+        for (int i = 0; i < out.length; i++)
+            verdicts[i] = FScorer.Verdict.valueOf(out[i]);
     }
 
     @Override

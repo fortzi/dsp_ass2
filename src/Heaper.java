@@ -3,6 +3,7 @@ import java.util.Hashtable;
 import java.util.PriorityQueue;
 
 /**
+ *
  * Created by doubled on 0005, 05, 6, 2016.
  */
 public class Heaper {
@@ -16,20 +17,19 @@ public class Heaper {
     }
 
     public void insert(WordPair pair, double pmi) {
-        if(!db.containsKey(pair.getDecade()))
+        if (!db.containsKey(pair.getDecade()))
             db.put(pair.getDecade(), new PQ());
 
         PQ pq = db.get(pair.getDecade());
-        if(pq.size() < topK) {
+        if (pq.size() < topK) {
             pq.add(new PmiPair(pair, pmi));
-        } else if(pq.peek().pmi < pmi) {
+        } else if (pq.peek().pmi < pmi) {
             PmiPair old = pq.poll();
             old.car = pair.getWord1();
             old.cdr = pair.getWord2();
             old.pmi = pmi;
             pq.add(old);
         }
-
     }
 
     public void print() throws IOException {
@@ -37,7 +37,7 @@ public class Heaper {
         File resultsFile;
         PrintWriter results;
 
-        resultsFile= File.createTempFile("topDecades-", ".txt");
+        resultsFile = File.createTempFile("topDecades-", ".txt");
         resultsFile.deleteOnExit();
         results = new PrintWriter(new BufferedWriter(new FileWriter(resultsFile.getPath(), true)));
 
@@ -50,7 +50,7 @@ public class Heaper {
 
         //do not add empty file to s3
         //(this function will be called somtimes from reducer cleanup even when he didnt reduce anything)
-        if(!db.isEmpty())
+        if (!db.isEmpty())
             new S3Helper().putObject(S3Helper.Folders.LOGS, resultsFile);
     }
 
@@ -79,6 +79,5 @@ public class Heaper {
         }
     }
 
-    class PQ extends PriorityQueue<PmiPair> {};
-
+    class PQ extends PriorityQueue<PmiPair> {}
 }

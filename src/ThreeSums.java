@@ -1,4 +1,5 @@
 /**
+ *
  * Created by doubled on 0015, 15, 5, 2016.
  */
 
@@ -31,6 +32,14 @@ class ThreeSums implements Writable {
         this.carSum = Integer.parseInt(toks[startIndex]);
         this.cdrSum = Integer.parseInt(toks[startIndex+1]);
         this.pairSum = Integer.parseInt(toks[startIndex+2]);
+    }
+
+    public ThreeSums set(long car, long cdr, long pair) {
+        this.carSum = car;
+        this.cdrSum = cdr;
+        this.pairSum = pair;
+
+        return this;
     }
 
     public long getCarSum() { return carSum; }
