@@ -113,8 +113,9 @@ public class StepOne {
                 lastWordSum = 0;
                 lastWord = key.getWord();
 
-                for (CountCdrPairCount val : values)
+                for (CountCdrPairCount val : values) {
                     lastWordSum += val.getCount();
+                }
             }
         }
     }

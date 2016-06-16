@@ -66,7 +66,7 @@ public class StepTwo {
                 carSum = cdrSum = Math.max(carSum,cdrSum);
 
             long N = context.getConfiguration().getLong(String.valueOf(key.getDecade()), 0);
-            pmi = Math.log(N * pairSum / (carSum * cdrSum));
+            pmi = Math.log((double)N * pairSum / (carSum * cdrSum));
 
             heaper.insert(key, pmi);
 
